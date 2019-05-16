@@ -1,0 +1,5 @@
+
+(library
+  (name        lz4_chans)
+  (public_name lz4_chans)
+  (libraries dolog unix))
