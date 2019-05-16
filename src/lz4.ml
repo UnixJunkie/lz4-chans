@@ -7,11 +7,20 @@ module Ht = Hashtbl
 (* register of created FIFO filenames *)
 let out_chan_to_fn = Ht.create 11
 
+let run_command ?(debug = false) (cmd: string): unit =
+  if debug then Log.info "run_command: %s" cmd;
+  match Unix.system cmd with
+  | Unix.WSIGNALED _ -> (Log.fatal "run_command: signaled: %s" cmd; exit 1)
+  | Unix.WSTOPPED _ -> (Log.fatal "run_command: stopped: %s" cmd; exit 1)
+  | Unix.WEXITED i when i <> 0 ->
+    (Log.fatal "run_command: exit %d: %s" i cmd; exit 1)
+  | Unix.WEXITED _ (* i = 0 then *) -> ()
+
 let lz4_open_out_bin fn =
   let fifo_fn = fn ^ ".out.fifo" in
   Unix.mkfifo fifo_fn 0o600;
   (* launch background compression process reading from the FIFO *)
-  Utls.run_command (Printf.sprintf "lz4 -f -z -1 -q %s %s &" fifo_fn fn);
+  run_command (Printf.sprintf "lz4 -f -z -1 -q %s %s &" fifo_fn fn);
   let out_chan = Pervasives.open_out_bin fifo_fn in
   assert(not (Ht.mem out_chan_to_fn out_chan));
   Ht.add out_chan_to_fn out_chan fifo_fn;
@@ -37,7 +46,7 @@ let lz4_open_in_bin fn =
   let fifo_fn = fn ^ ".in.fifo" in
   Unix.mkfifo fifo_fn 0o600;
   (* launch decompression process *)
-  Utls.run_command (Printf.sprintf "lz4 -d -q %s > %s &" fn fifo_fn);
+  run_command (Printf.sprintf "lz4 -d -q %s > %s &" fn fifo_fn);
   let in_chan = Pervasives.open_in_bin fifo_fn in
   assert(not (Ht.mem in_chan_to_fn in_chan));
   Ht.add in_chan_to_fn in_chan fifo_fn;
