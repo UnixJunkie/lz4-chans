@@ -2,4 +2,10 @@
 (library
   (name        lz4_chans)
   (public_name lz4_chans)
+  (modules lz4)
   (libraries dolog unix))
+
+(executables
+  (names test)
+  (modules test)
+  (libraries dolog lz4_chans))
