@@ -51,7 +51,7 @@ let main () =
   let lz4_fn = Filename.temp_file "lz4_chans_test_" ".bin.lz4" in
   Log.info "lz4_fn: %s" lz4_fn;
   start := Unix.gettimeofday ();
-  Lz4_chans.Lz4.with_out_file lz4_fn (fun out ->
+  Lz4_chans.with_out_file lz4_fn (fun out ->
       Array.iter (fun x ->
           Marshal.(to_channel out x [No_sharing])
         ) a1
@@ -64,7 +64,7 @@ let main () =
   let i = ref 0 in
   let a3 = Array.create_float n in
   start := Unix.gettimeofday ();
-  Lz4_chans.Lz4.with_in_file lz4_fn (fun input ->
+  Lz4_chans.with_in_file lz4_fn (fun input ->
       try
         while true do
           Array.unsafe_set a3 !i (Marshal.from_channel input: float);
