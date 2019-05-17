@@ -8,6 +8,7 @@ license: "BSD-3"
 build: ["dune" "build" "-p" name "-j" jobs]
 depends: [
   "base-unix"
+  "dolog"
   "dune" {build}
 ]
 depexts: [
