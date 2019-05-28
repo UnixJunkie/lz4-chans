@@ -30,7 +30,7 @@ let main () =
     );
   let stop = ref (Unix.gettimeofday ()) in
   let plain_output_rate = (float n) /. (!stop -. !start) in
-  Log.info "plain output: %.2f floats/s" plain_output_rate;
+  Log.info "plain output: %.2f float/s" plain_output_rate;
   (* plain input-rate *)
   let i = ref 0 in
   let a2 = Array.create_float n in
@@ -45,7 +45,7 @@ let main () =
     );
   stop := Unix.gettimeofday ();
   let plain_input_rate = (float n) /. (!stop -. !start) in
-  Log.info "plain input: %.2f floats/s" plain_input_rate;
+  Log.info "plain input: %.2f float/s" plain_input_rate;
   assert(a1 = a2);
   (* lz4 output-rate *)
   let lz4_fn = Filename.temp_file "lz4_chans_test_" ".bin.lz4" in
@@ -58,7 +58,7 @@ let main () =
     );
   stop := Unix.gettimeofday ();
   let lz4_output_rate = (float n) /. (!stop -. !start) in
-  Log.info "lz4 output: %.2f floats/s; eficiency: %.2f"
+  Log.info "lz4 output: %.2f float/s; eficiency: %.2f"
     lz4_output_rate (lz4_output_rate /. plain_output_rate);
   (* lz4 input-rate *)
   let i = ref 0 in
@@ -74,7 +74,7 @@ let main () =
     );
   stop := Unix.gettimeofday ();
   let lz4_input_rate = (float n) /. (!stop -. !start) in
-  Log.info "lz4 input: %.2f floats/s; efficiency: %.2f"
+  Log.info "lz4 input: %.2f float/s; efficiency: %.2f"
     lz4_input_rate (lz4_input_rate /. plain_input_rate);
   assert(a1 = a3)
 
