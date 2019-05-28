@@ -4,9 +4,9 @@
   (public_name lz4_chans)
   (modules lz4_chans)
   (wrapped false)
-  (libraries dolog unix))
+  (libraries dolog unix str))
 
 (executables
   (names test)
   (modules test)
-  (libraries dolog lz4_chans))
+  (libraries lz4_chans))
