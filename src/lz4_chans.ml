@@ -4,6 +4,31 @@
 
 module Ht = Hashtbl
 
+(* filename sanitization to avoid arbitrary command execution *)
+module Fn: sig
+  type t
+  val sanitize: string -> t
+  val to_string: t -> string
+end = struct
+
+  type t = string
+
+  let valid_unix_filename_regexp =
+    (* only very conservative filenames are accepted *)
+    Str.regexp "^[a-zA-Z0-9._/-]+$"
+
+  exception Invalid_filename of string
+
+  let sanitize (fn: string): t =
+    if Str.string_match valid_unix_filename_regexp fn 0 then
+      fn
+    else
+      raise (Invalid_filename fn)
+
+  let to_string (fn: t): string =
+    fn
+end
+
 (* register of created FIFO filenames *)
 let out_chan_to_fn = Ht.create 11
 
@@ -16,7 +41,8 @@ let run_command ?(debug = false) (cmd: string): unit =
     (Log.fatal "run_command: exit %d: %s" i cmd; exit 1)
   | Unix.WEXITED _ (* i = 0 then *) -> ()
 
-let lz4_open_out_bin fn =
+let lz4_open_out_bin (fn': Fn.t) =
+  let fn = Fn.to_string fn' in
   let fifo_fn = fn ^ ".out.fifo" in
   Unix.mkfifo fifo_fn 0o600;
   (* launch background compression process reading from the FIFO *)
@@ -32,7 +58,7 @@ let lz4_close_out out_chan =
   Pervasives.close_out out_chan;
   Sys.remove fifo_fn
 
-let lz4_with_out_file fn f =
+let lz4_with_out_file (fn: Fn.t) f =
   let output = lz4_open_out_bin fn in
   let res = f output in
   lz4_close_out output;
@@ -40,9 +66,10 @@ let lz4_with_out_file fn f =
 
 let in_chan_to_fn = Ht.create 11
 
-(* WARNING: this works but is way too slow.
+(* WARNING: this works but is kind of slow.
  * Perhaps, making the FIFO size bigger (via a fcntl call) would work faster *)
-let lz4_open_in_bin fn =
+let lz4_open_in_bin (fn': Fn.t) =
+  let fn = Fn.to_string fn' in
   let fifo_fn = fn ^ ".in.fifo" in
   Unix.mkfifo fifo_fn 0o600;
   (* launch decompression process *)
@@ -58,16 +85,25 @@ let lz4_close_in in_chan =
   Pervasives.close_in in_chan;
   Sys.remove fifo_fn
 
-let lz4_with_in_file fn f =
+let lz4_with_in_file (fn: Fn.t) f =
   let input = lz4_open_in_bin fn in
   let res = f input in
   lz4_close_in input;
   res
 
 (* aliases, for conveniency *)
-let open_out_bin = lz4_open_out_bin
+let open_out_bin (fn: string) =
+  lz4_open_out_bin (Fn.sanitize fn)
+
 let close_out = lz4_close_out
-let with_out_file = lz4_with_out_file
-let open_in_bin = lz4_open_in_bin
+
+let with_out_file (fn: string) f =
+  lz4_with_out_file (Fn.sanitize fn) f
+
+let open_in_bin (fn: string) =
+  lz4_open_in_bin (Fn.sanitize fn)
+
 let close_in = lz4_close_in
-let with_in_file = lz4_with_in_file
+
+let with_in_file (fn: string) f =
+  lz4_with_in_file (Fn.sanitize fn) f
