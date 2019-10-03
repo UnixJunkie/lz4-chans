@@ -1,4 +1,6 @@
 
+module Log = Dolog.Log
+
 let with_out_file fn f =
   let output = open_out_bin fn in
   let res = f output in

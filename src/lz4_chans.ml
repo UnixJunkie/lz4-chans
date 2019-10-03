@@ -3,6 +3,7 @@
    using a separate process and a named FIFO/pipe *)
 
 module Ht = Hashtbl
+module Log = Dolog.Log
 
 (* filename sanitization to avoid arbitrary command execution *)
 module Fn: sig
@@ -47,7 +48,7 @@ let lz4_open_out_bin (fn': Fn.t) =
   Unix.mkfifo fifo_fn 0o600;
   (* launch background compression process reading from the FIFO *)
   run_command (Printf.sprintf "lz4 -f -z -1 -q %s %s &" fifo_fn fn);
-  let out_chan = Pervasives.open_out_bin fifo_fn in
+  let out_chan = open_out_bin fifo_fn in
   assert(not (Ht.mem out_chan_to_fn out_chan));
   Ht.add out_chan_to_fn out_chan fifo_fn;
   out_chan
@@ -55,7 +56,7 @@ let lz4_open_out_bin (fn': Fn.t) =
 let lz4_close_out out_chan =
   let fifo_fn = Ht.find out_chan_to_fn out_chan in
   Ht.remove out_chan_to_fn out_chan;
-  Pervasives.close_out out_chan;
+  close_out out_chan;
   Sys.remove fifo_fn
 
 let lz4_with_out_file (fn: Fn.t) f =
@@ -74,7 +75,7 @@ let lz4_open_in_bin (fn': Fn.t) =
   Unix.mkfifo fifo_fn 0o600;
   (* launch decompression process *)
   run_command (Printf.sprintf "lz4 -d -q %s > %s &" fn fifo_fn);
-  let in_chan = Pervasives.open_in_bin fifo_fn in
+  let in_chan = open_in_bin fifo_fn in
   assert(not (Ht.mem in_chan_to_fn in_chan));
   Ht.add in_chan_to_fn in_chan fifo_fn;
   in_chan
@@ -82,7 +83,7 @@ let lz4_open_in_bin (fn': Fn.t) =
 let lz4_close_in in_chan =
   let fifo_fn = Ht.find in_chan_to_fn in_chan in
   Ht.remove in_chan_to_fn in_chan;
-  Pervasives.close_in in_chan;
+  close_in in_chan;
   Sys.remove fifo_fn
 
 let lz4_with_in_file (fn: Fn.t) f =
