@@ -35,7 +35,7 @@ let main () =
   Log.info "plain output: %.2f float/s" plain_output_rate;
   (* plain input-rate *)
   let i = ref 0 in
-  let a2 = Array.create_float n in
+  let a2 = Array.make n 0.0 in
   start := Unix.gettimeofday ();
   with_in_file plain_fn (fun input ->
       try
@@ -64,7 +64,7 @@ let main () =
     lz4_output_rate (lz4_output_rate /. plain_output_rate);
   (* lz4 input-rate *)
   let i = ref 0 in
-  let a3 = Array.create_float n in
+  let a3 = Array.make n 0.0 in
   start := Unix.gettimeofday ();
   Lz4_chans.with_in_file lz4_fn (fun input ->
       try
